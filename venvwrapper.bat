@@ -4,21 +4,7 @@
 @REM -- NAME            : venvwrapper.bat
 @REM -- AUTHOR          : Praveen Ilangovan
 @REM -- AUTHOR EMAIL    : praveen.ilangovan@gmail.com
-@REM 
-@REM A handy windows batch script to create, activate, deactivate python
-@REM virtual environments. All virtual environments are created in a venv home
-@REM directory which could be set by the user in this script. A single command
-@REM to create/activate/switch venvs.
-@REM 
-@REM -- Usage
-@REM     -- venvwrapper.bat <venv_name>
-@REM             Creates a new venv with the provided name if it doesn't exist and
-@REM             activates it. Also it pip installs all the packages specified in
-@REM             the requirements.txt, that you can find in the same directory as this
-@REM             batch file. If venv exist, then this command simply activates it.
-@REM 
-@REM     -- venvwrapper.bat -d (or) --deactivate
-@REM             Deactivates the current active venv
+@REM -- DESCRIPTION     : See README.txt
 @REM -------------------------------------------------------------------------
 
 @REM USER DEFINIED VARIABLE(S)
@@ -34,6 +20,7 @@ set SRC_DIR=%~dp0
 set UTILS_FILE=%SRC_DIR%\venvwrapper_utils.py
 set REQS_FILE=%SRC_DIR%\requirements.txt
 set ACTIVE_FILE=%SRC_DIR%\active_venv.txt
+set README_FILE=%SRC_DIR%\README.txt
 
 @REM Scripts directory of the requested venv
 set SCRIPTS_DIR=%VENV_HOME_DIR%/%1/Scripts
@@ -52,6 +39,8 @@ if "%1"=="--deactivate" (
     set MODE=2
 ) else if "%1"=="-l" (
     set MODE=2
+) else (
+    set MODE=3
 )
 
 @REM -------------------------------------------------------------------------
@@ -75,7 +64,7 @@ if %MODE%==0 (
         echo Directory not found: %VENV_HOME_DIR%
     )
 ) else (
-    echo Invalid mode. Aborting.
+    type %README_FILE%
 )
 exit /B 0
 
