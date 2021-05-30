@@ -17,6 +17,8 @@
 @REM             the requirements.txt, that you can find in the same directory as this
 @REM             batch file. If venv exist, then this command simply activates it.
 @REM 
+@REM     -- venvwrapper.bat -d (or) --deactivate
+@REM             Deactivates the current active venv
 @REM -------------------------------------------------------------------------
 
 @REM USER DEFINIED VARIABLE(S)
@@ -37,7 +39,7 @@ set ACTIVE_FILE=%SRC_DIR%\active_venv.txt
 set SCRIPTS_DIR=%VENV_HOME_DIR%/%1/Scripts
 
 @REM This script can be run in differnet modes based on the input arguments.
-@REM MODES
+@REM MODES 
 @REM    0: Creates or activates the venv. %1 is the name of the venv (default)
 @REM    1: Deactivates the current active venv. %1 is -d or --deactivate
 @REM    2: Lists all the available venvs. %1 is -l or --listvenv
@@ -67,7 +69,11 @@ if %MODE%==0 (
 ) else if %MODE%==1 (
     call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
 ) else if %MODE%==2 (
-    echo Here's the list
+    if exist %VENV_HOME_DIR%/ (
+        dir /B /AD /OD %VENV_HOME_DIR%
+    ) else (
+        echo Directory not found: %VENV_HOME_DIR%
+    )
 ) else (
     echo Invalid mode. Aborting.
 )
