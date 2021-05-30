@@ -88,7 +88,7 @@ echo Creating venv: %1 @ %2
 call py -m venv %1 --upgrade-deps
 call :activate %1, %3
 call :pip_install %4
-call :reset %5
+pushd %5
 exit /B 0
 
 :activate
@@ -141,14 +141,4 @@ if exist %batfile% (
 ) else (
     echo Deactivation failed: %batfile% not found.
 )
-exit /B 0
-
-:reset
-@REM -------------------------------------------------------------------------
-@REM CD to the specified directory
-@REM
-@REM Args:
-@REM    %1 -> CWD: CD into this directory
-@REM -------------------------------------------------------------------------
-pushd %2
 exit /B 0
