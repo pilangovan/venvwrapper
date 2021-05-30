@@ -29,6 +29,7 @@ set CWD=%CD%
 
 @REM Source directory where this batch script lives
 set SRC_DIR=%~dp0
+set UTILS_FILE=%SRC_DIR%\venvwrapper_utils.py
 set REQS_FILE=%SRC_DIR%\requirements.txt
 set ACTIVE_FILE=%SRC_DIR%\active_venv.txt
 
@@ -37,72 +38,117 @@ set SCRIPTS_DIR=%VENV_HOME_DIR%/%1/Scripts
 
 :: Check if the venv exists, if so, activate it, else create it
 if exist %VENV_HOME_DIR%\%1/ (
-    call :deactivate_active_venv %ACTIVE_FILE%, %VENV_HOME_DIR%
-    call :activate %1, %SCRIPTS_DIR%, %ACTIVE_FILE%
+    call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
+    call :activate %1, %SCRIPTS_DIR%
 ) else (
-    call :deactivate_active_venv %ACTIVE_FILE%, %VENV_HOME_DIR%
-    call :create %1, %VENV_HOME_DIR%, %SCRIPTS_DIR%, %REQS_FILE%, %CWD%, %ACTIVE_FILE%
-    call :delete_active_file  %ACTIVE_FILE%
+    call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
+    call :create %1, %VENV_HOME_DIR%, %SCRIPTS_DIR%, %REQS_FILE%, %CWD%
 )
 exit /B 0
 
 :deactivate_active_venv
-:: Deactivate the currently active venv, before proceeding
-:: args => active_file, venv_home_dir
-if exist %1 (
-    set /p ACTIVE_VENV=<%1
-    call :deactivate %2/%ACTIVE_VENV%/Scripts
-    call :delete_active_file %1
-)
-exit /B 0
-
-:delete_active_file
-:: Delete active file
-if exist %1 (
-    del %1
+@REM -------------------------------------------------------------------------
+@REM Runs venvwrapper_utils.py to grab the active venv. This file saves
+@REM the name of the venv in a text file. The name is then read by this batch
+@REM script, deactives it and deletes the text file. This is done before activating
+@REM or creating a new venv.
+@REM
+@REM Args:
+@REM    %1 -> UTILS_FILE: Python file to write the venv name to disk
+@REM    %2 -> ACTIVE_FILE: Text file that has the name of the venv
+@REM    %3 -> VENV_HOME_DIR: venv dir where one could find the deactivate.bat script
+@REM -------------------------------------------------------------------------
+call py %1
+if exist %2 (
+    set /p ACTIVE_VENV=<%2
+    call :deactivate %3/%ACTIVE_VENV%/Scripts
+    del %2
 )
 exit /B 0
 
 :create
-:: args => venv_name, venv_home_dir, scripts_dir, reqs_file, cwd
-:: Change the CWD to VENV_HOME_DIRECTORY
+@REM -------------------------------------------------------------------------
+@REM Creates a new venv, activates it and installs the packages specified
+@REM in the requirements.txt file.
+@REM
+@REM Args:
+@REM    %1 -> Name of the venv to be created
+@REM    %2 -> VENV_HOME_DIR: venv dir where venv should be created
+@REM    %3 -> SCRIPTS_DIR: Scripts dir of the created venv.
+@REM    %4 -> REQS_FILE: requirements.txt filepath
+@REM    %5 -> CWD: While creating venv, the current working directory changes.
+@REM               So, we query the cwd before creating venv and restore it at
+@REM               the end
+@REM -------------------------------------------------------------------------
+if not exist %2/ (
+    mkdir %2
+)
 pushd %2
-:: Create a new venv
 echo Creating venv: %1 @ %2
 call py -m venv %1 --upgrade-deps
-call :activate %1, %3, %6
+call :activate %1, %3
 call :pip_install %4
-call :reset %3, %5
+call :reset %5
 exit /B 0
 
 :activate
-:: Activate the venv => venv_name, scripts_dir, active_file
+@REM -------------------------------------------------------------------------
+@REM Activates the requested venv if that exist
+@REM
+@REM Args:
+@REM    %1 -> Name of the venv to be activated
+@REM    %2 -> SCRIPTS_DIR: Scripts dir of the venv. This is where the
+@REM                       activate.bat lives.
+@REM -------------------------------------------------------------------------
 set batfile=%2/activate.bat
 if exist %batfile% (
     echo Activating venv: %1
-    call %2/activate.bat
-    :: write it out to a file
-    echo %1>%3
+    call %batfile%
+) else (
+    echo Activation failed: %batfile% not found.
 )
 exit /B 0
 
 :pip_install
+@REM -------------------------------------------------------------------------
+@REM Run pip installer to install all the packages specified in the
+@REM requirments.txt
+@REM
+@REM Args:
+@REM    %1 -> REQS_FILE: requirements.txt filepat
+@REM -------------------------------------------------------------------------
 :: Pip Install requirements => reqs_file
-echo Installing requirements from: %1
-call pip install -r %1
+if exist %1 (
+    echo Installing requirements from: %1
+    call pip install -r %1
+) else (
+    echo Skipping pip install: %1 not found.
+)
 exit /B 0
 
 :deactivate
-:: Deactivate the venv => scripts_dir
+@REM -------------------------------------------------------------------------
+@REM Deactivates the requested venv if that exist
+@REM
+@REM Args:
+@REM    %1 -> SCRIPTS_DIR: Scripts dir of the venv. This is where the
+@REM                       activate.bat lives.
+@REM -------------------------------------------------------------------------
 set batfile=%1/deactivate.bat
 if exist %batfile% (
     echo Deactivating venv
-    call %1/deactivate.bat
+    call %batfile%
+) else (
+    echo Deactivation failed: %batfile% not found.
 )
 exit /B 0
 
 :reset
-:: Reset the directory => scripts_dir, cwd
-call :deactivate %1
+@REM -------------------------------------------------------------------------
+@REM CD to the specified directory
+@REM
+@REM Args:
+@REM    %1 -> CWD: CD into this directory
+@REM -------------------------------------------------------------------------
 pushd %2
 exit /B 0
