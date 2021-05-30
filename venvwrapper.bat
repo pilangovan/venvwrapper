@@ -36,13 +36,40 @@ set ACTIVE_FILE=%SRC_DIR%\active_venv.txt
 @REM Scripts directory of the requested venv
 set SCRIPTS_DIR=%VENV_HOME_DIR%/%1/Scripts
 
-:: Check if the venv exists, if so, activate it, else create it
-if exist %VENV_HOME_DIR%\%1/ (
+@REM This script can be run in differnet modes based on the input arguments.
+@REM MODES
+@REM    0: Creates or activates the venv. %1 is the name of the venv (default)
+@REM    1: Deactivates the current active venv. %1 is -d or --deactivate
+@REM    2: Lists all the available venvs. %1 is -l or --listvenv
+set MODE=0
+if "%1"=="--deactivate" (
+    set MODE=1
+) else if "%1"=="-d" (
+    set MODE=1
+) else if "%1"=="--listvenv" (
+    set MODE=2
+) else if "%1"=="-l" (
+    set MODE=2
+)
+
+@REM -------------------------------------------------------------------------
+@REM Main
+@REM Perform the operations based on the mode.
+@REM -------------------------------------------------------------------------
+if %MODE%==0 (
+    if exist %VENV_HOME_DIR%\%1/ (
+        call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
+        call :activate %1, %SCRIPTS_DIR%
+    ) else (
+        call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
+        call :create %1, %VENV_HOME_DIR%, %SCRIPTS_DIR%, %REQS_FILE%, %CWD%
+    )
+) else if %MODE%==1 (
     call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
-    call :activate %1, %SCRIPTS_DIR%
+) else if %MODE%==2 (
+    echo Here's the list
 ) else (
-    call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
-    call :create %1, %VENV_HOME_DIR%, %SCRIPTS_DIR%, %REQS_FILE%, %CWD%
+    echo Invalid mode. Aborting.
 )
 exit /B 0
 
