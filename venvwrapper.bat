@@ -58,11 +58,13 @@ if "%~1"=="" (
     )
 )
 
-@REM Check if there is a second argument passed and if it is -D, --delete    
-if "%~2"=="-D" (
-    set MODE=2
-) else if "%~2"=="--delete" (
-    set MODE=2
+@REM Check if there is a second argument passed and if it is -D, --delete
+if %MODE%==0 ( 
+    if "%~2"=="-D" (
+        set MODE=2
+    ) else if "%~2"=="--delete" (
+        set MODE=2
+    )
 )
 
 @REM -------------------------------------------------------------------------
@@ -112,10 +114,7 @@ exit /B 0
 @REM -------------------------------------------------------------------------
 call py %1
 if exist %2 (
-    type %2
-    echo ---
     set /p ACTIVE_VENV=<%2
-    echo %ACTIVE_VENV%
     call :deactivate %3/%ACTIVE_VENV%/Scripts
     del %2
 )
