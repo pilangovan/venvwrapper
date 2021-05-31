@@ -83,7 +83,7 @@ if %MODE%==0 (
     call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
 ) else if %MODE%==2 (
     if exist %VENV_HOME_DIR%\%1/ (
-        call :deactivate %VENV_HOME_DIR%/%1/Scripts
+        call :deactivate %VENV_HOME_DIR%\%1\Scripts
         echo Removing venv: %1
         rmdir %VENV_HOME_DIR%\%1 /s /q
     ) else (
@@ -113,9 +113,19 @@ exit /B 0
 @REM    %3 -> VENV_HOME_DIR: venv dir where one could find the deactivate.bat script
 @REM -------------------------------------------------------------------------
 call py %1
+@REM if an attr is set and read in the same IF block, the read attr doesn't get 
+@REM updated after the set command changes it. The read statement (%ACTIVE_VENV%)
+@REM is given the old value at the start of the execution and doesn't get updated
+@REM after set gets executed. Apparently setlocal and enableddelayedexpression
+@REM should fix the issue but I couldn't get that to work. So I am setting the
+@REM the attr to 0, setting it again in an if block and reading it back in a another
+@REM if block. Hack but works!!
+set ACTIVE_VENV=0
 if exist %2 (
     set /p ACTIVE_VENV=<%2
-    call :deactivate %3/%ACTIVE_VENV%/Scripts
+)
+if not %ACTIVE_VENV%==0 (
+    call :deactivate %3\%ACTIVE_VENV%\Scripts
     del %2
 )
 exit /B 0
@@ -154,7 +164,7 @@ exit /B 0
 @REM    %2 -> SCRIPTS_DIR: Scripts dir of the venv. This is where the
 @REM                       activate.bat lives.
 @REM -------------------------------------------------------------------------
-set batfile=%2/activate.bat
+set batfile=%2\activate.bat
 if exist %batfile% (
     echo Activating venv: %1
     call %batfile%
@@ -188,7 +198,7 @@ exit /B 0
 @REM    %1 -> SCRIPTS_DIR: Scripts dir of the venv. This is where the
 @REM                       activate.bat lives.
 @REM -------------------------------------------------------------------------
-set batfile=%1/deactivate.bat
+set batfile=%1\deactivate.bat
 if exist %batfile% (
     echo Deactivating venv
     call %batfile%
