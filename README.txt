@@ -15,5 +15,11 @@ to create/activate/switch venvs.
     -- venvwrapper.bat -d, --deactivate
             Deactivates the current active venv
 
+    -- venvwrapper.bat -l, --listvenv
+            Lists all the available venvs
+
+    -- venvwrapper.bat <venv_name> -D, --delete
+            Deletes the venv
+
     -- venvwrapper.bat -h, --help
             Prints out help

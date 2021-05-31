@@ -29,18 +29,40 @@ set SCRIPTS_DIR=%VENV_HOME_DIR%/%1/Scripts
 @REM MODES 
 @REM    0: Creates or activates the venv. %1 is the name of the venv (default)
 @REM    1: Deactivates the current active venv. %1 is -d or --deactivate
-@REM    2: Lists all the available venvs. %1 is -l or --listvenv
+@REM    2: Deletes the requested venv. %1 is the name of the venv and %2 is -D,--delete flag
+@REM    3: Lists all the available venvs. %1 is -l or --listvenv
+@REM    4: Print help. %1 is empty or -h or --help
 set MODE=0
-if "%1"=="--deactivate" (
+set FIRST_ARG=%1
+
+@REM Find the right mode based on the input argument
+if "%~1"=="" (
+    set MODE=4
+) else if "%1"=="-h" (
+    set MODE=4
+) else if "%1"=="--help" (
+    set MODE=4
+) else if "%1"=="--deactivate" (
     set MODE=1
 ) else if "%1"=="-d" (
     set MODE=1
 ) else if "%1"=="--listvenv" (
-    set MODE=2
-) else if "%1"=="-l" (
-    set MODE=2
-) else (
     set MODE=3
+) else if "%1"=="-l" (
+    set MODE=3
+) else (
+    @REM Check if the first arg starts with - and if so, skip it.
+    @REM Invalid Flag.
+    if "%FIRST_ARG:~0,1%"=="-" (
+        set MODE=4
+    )
+)
+
+@REM Check if there is a second argument passed and if it is -D, --delete    
+if "%~2"=="-D" (
+    set MODE=2
+) else if "%~2"=="--delete" (
+    set MODE=2
 )
 
 @REM -------------------------------------------------------------------------
@@ -58,6 +80,14 @@ if %MODE%==0 (
 ) else if %MODE%==1 (
     call :deactivate_active_venv %UTILS_FILE%, %ACTIVE_FILE%, %VENV_HOME_DIR%
 ) else if %MODE%==2 (
+    if exist %VENV_HOME_DIR%\%1/ (
+        call :deactivate %VENV_HOME_DIR%/%1/Scripts
+        echo Removing venv: %1
+        rmdir %VENV_HOME_DIR%\%1 /s /q
+    ) else (
+        echo Venv "%1" not found.
+    )
+) else if %MODE%==3 (
     if exist %VENV_HOME_DIR%/ (
         dir /B /AD /OD %VENV_HOME_DIR%
     ) else (
@@ -82,7 +112,10 @@ exit /B 0
 @REM -------------------------------------------------------------------------
 call py %1
 if exist %2 (
+    type %2
+    echo ---
     set /p ACTIVE_VENV=<%2
+    echo %ACTIVE_VENV%
     call :deactivate %3/%ACTIVE_VENV%/Scripts
     del %2
 )
